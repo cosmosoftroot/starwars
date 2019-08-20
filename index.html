@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>async - swapi.co</title>
+	<link rel="stylesheet" type="text/css" href="stylesheet.css">
+	<style type="text/css">
+		body{
+			background-color: black;
+			font-family: 'STARWARS';
+		}
+		#result{
+		}
+		.row{
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			width: 50%;
+			margin: 5px auto;
+		}
+		#result .row:nth-child(odd){
+			background-color:#FACC2E;
+			font-weight: bold;
+		}
+		#result .row:nth-child(even){
+			border: thin solid #FACC2E;
+			color: #FACC2E;
+		}
+
+		.cell{
+			padding: 15px 10px;
+		}
+		.col1{
+			width: 30%;
+			text-align: center;
+		}
+		.col2{
+			width: 70%;
+		}
+		
+		.title{
+			text-align: center;
+			color : black;
+			background: orange;
+			font-weight: bold;
+			font-size: 2rem;
+			
+		}
+		
+		.button{
+			margin: 15px;
+			background-color: black;
+			font-family: 'STARWARS';
+			font-size: 1.7rem;
+			color: yellow;
+			border: 1px solid yellow;
+			padding: 10px;
+			width: 170px;
+			transition: 300ms;
+		}
+		.button:active{
+			transform: scale(0.9);
+		}
+
+
+		h1{
+			color: white;
+			text-align: center;
+			font-size: 3.5rem;
+		}	
+		li{
+			margin: 7px 0;
+		}
+
+	</style>
+</head>
+<body>
+	<h1>Starwars</h1>
+	<div class="row">
+		<input type="button" class="button" id="previous" value="Previous">
+		<input type="button" class="button" id="next" value="Next">
+	</div>
+	<div class="row">
+		<div class="cell title col1">Character</div>
+		<div class="cell title col2">Films</div>
+	</div>
+	<div id="result"></div>
+		
+	<script type="text/javascript">
+		
+		async function getData(url){
+
+			const result = await fetch(url)
+			const data = await result.json()
+			return data
+		}
+
+		/*(async function qryPeople(){
+			const person = await getData('https://swapi.co/api/people/15/')
+			const planet = await getData(person.homeworld)
+			
+			console.log('el planeta de' + person.name + ' es ' + planet.name)
+		})()*/
+			var previousBtn = document.getElementById('previous');
+			var nextBtn = document.getElementById('next');
+			var previous=null
+			var next= null
+			var memoryFilms = {}
+
+
+		async function qryAllFilms(url){
+			let films = await getData(url)
+
+			for(var i = 0; i < films.count; i++){
+				memoryFilms[films.results[i].url] = { 
+					'title': films.results[i].title,
+					'release': films.results[i].release_date
+				}
+			}
+		}
+
+		
+		async function qryAllPeople(url){
+
+			var html = ''
+			var result = document.getElementById('result');
+			let persons = '';
+
+			persons = await getData(url)
+			for(let i = 0; i < persons.results.length;i++){
+
+				html += '<div class="row">'
+				html += 	'<div class="cell col1">' + persons.results[i].name +'</div>' 
+				html += 	'<div class="cell col2">'  
+				html += 		'<ul>'  
+
+				for(let j = 0; j < persons.results[i].films.length; j++){
+					
+					let url = persons.results[i].films[j];
+					console.log(url)
+					if(memoryFilms[url]){
+						html += '<li>(' + memoryFilms[url].release +')' + memoryFilms[url].title + '</li>'
+					}
+					else{
+											
+					}
+
+				}
+
+				html += 		'</ul>' 
+				html += '</div>'
+				html += '</div>'
+			}
+				
+
+			previous = persons.previous
+			next = persons.next
+			result.innerHTML = html
+		}
+
+		previousBtn.addEventListener('click',function(){
+			if(previous !== null){
+				qryAllPeople(previous)
+			}
+		})
+		nextBtn.addEventListener('click',function(){
+			if(next !== null){
+				qryAllPeople(next)
+				
+			}
+		});
+
+		(async function onLoadPage(){
+
+			await qryAllFilms('https://swapi.co/api/films/')	
+			await qryAllPeople('https://swapi.co/api/people/')
+		})();
+
+
+	</script>
+</body>
+</html>
